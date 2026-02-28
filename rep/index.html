@@ -1,14 +1,254 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Page</title>
-</head>
-<body>
+<script>
 
-    <h1>Hello, World!</h1>
-    <p>Welcome to my first HTML page.</p>
+// =============================
+// ALL PAGES (Add your pages here)
+// =============================
 
-</body>
-</html>
+const allPages = {
+
+"Page 1": [
+{
+question: "Which Rasa represents Peace?",
+options: ["Shanta","Shringar","Raudra","Veer"],
+correctAnswer: "Shanta",
+explanation: "Shanta Rasa represents peace."
+}
+],
+
+"Page 2": [
+{
+question: "Sattriya classical dance belongs to which state?",
+options: ["Assam","Kerala","Tamil Nadu","Odisha"],
+correctAnswer: "Assam",
+explanation: "Sattriya belongs to Assam."
+}
+],
+
+"Page 3": [
+{
+question: "Mohiniyattam belongs to which state?",
+options: ["Kerala","Odisha","Assam","Tamil Nadu"],
+correctAnswer: "Kerala",
+explanation: "Mohiniyattam belongs to Kerala."
+}
+],
+
+"Page 4": [
+{
+question: "Bharatanatyam originated in?",
+options: ["Tamil Nadu","Kerala","UP","Manipur"],
+correctAnswer: "Tamil Nadu",
+explanation: "Bharatanatyam originated in Tamil Nadu."
+}
+],
+
+"Page 5": [
+{
+question: "Kathak belongs to which state?",
+options: ["Uttar Pradesh","Kerala","Assam","Odisha"],
+correctAnswer: "Uttar Pradesh",
+explanation: "Kathak belongs to Uttar Pradesh."
+}
+]
+
+};
+
+// =============================
+
+let quizData = [];
+let current = 0;
+let answers = [];
+let visited = [];
+let currentPage = "";
+let shuffleMode = false;
+
+// =============================
+
+function shuffleArray(array){
+for(let i = array.length - 1; i > 0; i--){
+let j = Math.floor(Math.random() * (i + 1));
+[array[i], array[j]] = [array[j], array[i]];
+}
+return array;
+}
+
+// =============================
+
+function loadPage(pageName){
+
+currentPage = pageName;
+
+quizData = JSON.parse(JSON.stringify(allPages[pageName]));
+
+if(shuffleMode){
+shuffleArray(quizData);
+quizData.forEach(q => shuffleArray(q.options));
+}
+
+current = 0;
+answers = new Array(quizData.length).fill(null);
+visited = new Array(quizData.length).fill(false);
+
+document.getElementById("result").innerHTML = "";
+
+loadQuestion();
+}
+
+// =============================
+
+function loadQuestion(){
+
+visited[current] = true;
+
+let q = quizData[current];
+
+document.getElementById("progress").innerText =
+"Question " + (current+1) + " of " + quizData.length;
+
+document.getElementById("question").innerText = q.question;
+
+let html = "";
+
+for(let i=0;i<q.options.length;i++){
+
+let className = "option";
+
+if(answers[current] !== null){
+if(q.options[i] === q.correctAnswer)
+className += " correct";
+else if(i === answers[current])
+className += " wrong";
+}
+
+html += '<div class="'+className+'" onclick="selectAnswer('+i+')">'+q.options[i]+'</div>';
+}
+
+document.getElementById("options").innerHTML = html;
+
+if(answers[current] !== null){
+document.getElementById("explanation").innerHTML =
+"<b>Explanation:</b> " + q.explanation;
+}else{
+document.getElementById("explanation").innerHTML = "";
+}
+
+loadNavigation();
+updateSummary();
+}
+
+// =============================
+
+function selectAnswer(index){
+answers[current] = index;
+loadQuestion();
+}
+
+function nextQuestion(){
+if(current < quizData.length-1){
+current++;
+loadQuestion();
+}
+}
+
+function prevQuestion(){
+if(current > 0){
+current--;
+loadQuestion();
+}
+}
+
+function goToQuestion(i){
+current = i;
+loadQuestion();
+}
+
+// =============================
+
+function loadNavigation(){
+
+let navHTML = "";
+
+for(let i=0;i<quizData.length;i++){
+
+let className = "nav-btn";
+
+if(i === current) className += " current";
+else if(answers[i] !== null) className += " answered";
+else if(visited[i]) className += " notanswered";
+
+navHTML += '<button class="'+className+'" onclick="goToQuestion('+i+')">'+(i+1)+'</button>';
+}
+
+document.getElementById("navPanel").innerHTML = navHTML;
+}
+
+// =============================
+
+function updateSummary(){
+
+let answered = answers.filter(a=>a!==null).length;
+let notVisited = visited.filter(v=>v===false).length;
+let notAnswered = quizData.length - answered - notVisited;
+
+document.getElementById("answeredCount").innerText = answered;
+document.getElementById("notAnsweredCount").innerText = notAnswered;
+document.getElementById("notVisitedCount").innerText = notVisited;
+}
+
+// =============================
+
+function showResult(){
+
+let score = 0;
+
+for(let i=0;i<quizData.length;i++){
+if(quizData[i].options[answers[i]] === quizData[i].correctAnswer){
+score++;
+}
+}
+
+document.getElementById("result").innerHTML =
+"<h3>Your Score: "+score+" / "+quizData.length+"</h3>";
+}
+
+// =============================
+// PAGE + MODE SELECT SYSTEM
+// =============================
+
+window.onload = function(){
+
+let pageSelect = document.getElementById("sectionSelect");
+
+// Create page dropdown
+for(let page in allPages){
+let option = document.createElement("option");
+option.value = page;
+option.text = page;
+pageSelect.appendChild(option);
+}
+
+// Add shuffle selector dynamically
+let modeSelect = document.createElement("select");
+modeSelect.id = "modeSelect";
+modeSelect.innerHTML = `
+<option value="false">Non Shuffle</option>
+<option value="true">Shuffle</option>
+`;
+
+pageSelect.parentNode.insertBefore(modeSelect, pageSelect.nextSibling);
+
+// When page changes
+pageSelect.onchange = function(){
+loadPage(this.value);
+};
+
+// When mode changes
+modeSelect.onchange = function(){
+shuffleMode = (this.value === "true");
+loadPage(pageSelect.value);
+};
+
+loadPage(Object.keys(allPages)[0]);
+};
+
+</script>
